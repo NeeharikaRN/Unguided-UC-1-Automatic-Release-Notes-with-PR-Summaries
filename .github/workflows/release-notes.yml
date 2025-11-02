@@ -1,0 +1,34 @@
+name: Generate Release Notes
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+
+jobs:
+  generate-release-notes:
+    name: Generate Release Notes from PRs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate Release Notes
+        uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter.yml
+
+      - name: Commit updated RELEASE_NOTES.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add RELEASE_NOTES.md
+          git commit -m "chore: update release notes"
+          git push
