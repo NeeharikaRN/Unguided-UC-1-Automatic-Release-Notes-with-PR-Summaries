@@ -6,6 +6,9 @@ on:
       - main
       - release/*
 
+permissions:
+  contents: write 
+
 jobs:
   generate-release-notes:
     name: Generate Release Notes from PRs
