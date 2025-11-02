@@ -20,17 +20,33 @@ jobs:
         with:
           node-version: 20
 
+      # 1️⃣ Run Release Drafter to update or create draft release
       - name: Generate Release Notes
+        id: drafter
         uses: release-drafter/release-drafter@v5
         with:
           config-name: release-drafter.yml
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
+      # 2️⃣ Use GitHub API to fetch the latest draft release body
+      - name: Fetch latest draft release notes
+        id: fetch_notes
+        run: |
+          response=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases)
+          latest_release=$(echo "$response" | jq -r '[.[] | select(.draft==true)] | first')
+          echo "$latest_release" | jq -r '.body' > RELEASE_NOTES.md
+
+      # 3️⃣ Commit and push updated release notes file
       - name: Commit updated RELEASE_NOTES.md
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add RELEASE_NOTES.md
-          git commit -m "chore: update release notes"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes in RELEASE_NOTES.md"
+          else
+            git commit -m "chore: update release notes"
+            git push
+          fi
